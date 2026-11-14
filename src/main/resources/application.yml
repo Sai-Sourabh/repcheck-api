@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: repcheck-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/repcheck}
+    username: ${DATABASE_USERNAME:repcheck}
+    password: ${DATABASE_PASSWORD:repcheck}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+          batch_size: 50
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    # Override JWT_SECRET in production. Must be at least 32 characters.
+    secret: ${JWT_SECRET:repcheck-local-dev-secret-change-me-in-production-0123456789}
+    expiration-ms: ${JWT_EXPIRATION_MS:604800000}
+  cors:
+    # Comma separated list, e.g. https://repcheck.vercel.app,http://localhost:5173
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  # "Today" and week boundaries are evaluated in this zone.
+  timezone: ${APP_TIMEZONE:Asia/Kolkata}
+
+server:
+  port: ${PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.repcheck: INFO

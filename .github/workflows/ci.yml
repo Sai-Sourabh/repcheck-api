@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: repcheck
+          POSTGRES_USER: repcheck
+          POSTGRES_PASSWORD: repcheck
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U repcheck"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      # Unit tests plus the end-to-end API test against the Postgres service above.
+      - name: Build and test
+        env:
+          REPCHECK_IT: "true"
+        run: ./mvnw -B verify

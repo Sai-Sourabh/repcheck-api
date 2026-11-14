@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: repcheck-db
+    environment:
+      POSTGRES_DB: repcheck
+      POSTGRES_USER: repcheck
+      POSTGRES_PASSWORD: repcheck
+    ports:
+      - "5432:5432"
+    volumes:
+      - repcheck-data:/var/lib/postgresql/data
+
+volumes:
+  repcheck-data:
