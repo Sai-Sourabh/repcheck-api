@@ -1,5 +1,6 @@
 package com.repcheck.api.service;
 
+import com.repcheck.api.domain.FormCheck;
 import com.repcheck.api.domain.OneRMCalculator;
 import com.repcheck.api.dto.WorkoutDtos.CreateWorkoutRequest;
 import com.repcheck.api.dto.WorkoutDtos.ExerciseBlock;
@@ -84,6 +85,9 @@ public class WorkoutService {
 
         double volume = 0;
         for (SetRequest set : request.sets()) {
+            if (set.cleanReps() != null && set.cleanReps() > set.reps()) {
+                throw ApiException.badRequest("cleanReps cannot be more than reps");
+            }
             volume += set.weightKg() * set.reps();
         }
         WorkoutSession session = new WorkoutSession();
@@ -106,7 +110,10 @@ public class WorkoutService {
             row.setSetNumber(setNumbers.merge(set.exerciseId(), 1, Integer::sum));
             row.setWeightKg(set.weightKg());
             row.setReps(set.reps());
-            row.setEstimatedOneRm(OneRMCalculator.estimate(set.weightKg(), set.reps()));
+            // Stored only when form actually broke; null means the whole set was clean.
+            row.setCleanReps(set.cleanReps() != null && set.cleanReps() < set.reps() ? set.cleanReps() : null);
+            row.setEstimatedOneRm(OneRMCalculator.estimate(set.weightKg(),
+                    FormCheck.effectiveReps(set.reps(), set.cleanReps())));
             row.setRestSeconds(set.restSeconds());
             rows.add(row);
         }
@@ -155,6 +162,7 @@ public class WorkoutService {
                     history == null ? null : history.getDeltaPct(),
                     history == null ? "NEW" : history.getDeltaDirection(),
                     history != null && history.isPr(),
+                    history == null ? null : FormCheck.formPct(history.getTotalReps(), history.getCleanReps()),
                     entry.getValue().stream().map(WorkoutService::toSetResponse).toList()));
         }
         return new WorkoutDetail(session.getId(), session.getName(), session.getSessionDate(),
@@ -230,7 +238,7 @@ public class WorkoutService {
     }
 
     private static SetResponse toSetResponse(SessionSet set) {
-        return new SetResponse(set.getSetNumber(), set.getWeightKg(), set.getReps(), set.getEstimatedOneRm(),
-                set.getRestSeconds());
+        return new SetResponse(set.getSetNumber(), set.getWeightKg(), set.getReps(), set.getCleanReps(),
+                set.getEstimatedOneRm(), set.getRestSeconds());
     }
 }

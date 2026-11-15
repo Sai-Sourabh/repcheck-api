@@ -50,6 +50,17 @@ public class ExerciseHistory {
     @Column(name = "total_sets", nullable = false)
     private int totalSets;
 
+    @Column(name = "total_reps", nullable = false)
+    private int totalReps;
+
+    /** Reps done with good form, summed over the session's sets. */
+    @Column(name = "clean_reps", nullable = false)
+    private int cleanReps;
+
+    /** Heaviest weight used in the session, whatever the form. */
+    @Column(name = "top_weight_kg", nullable = false)
+    private double topWeightKg;
+
     /** Null for the first ever session of an exercise. */
     @Column(name = "delta_pct")
     private Double deltaPct;

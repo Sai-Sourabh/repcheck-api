@@ -51,6 +51,8 @@ Everything is plain arithmetic in `domain/`, with no framework dependencies, so 
 | Estimated 1RM | Epley: `weight x (1 + reps / 30)` |
 | Arrow (UP / DOWN / SAME) | Best estimated 1RM this session vs the previous session of the same exercise. Under 0.5% is SAME. Bodyweight lifts compare reps |
 | PR | Best estimated 1RM beats every earlier session |
+| Form check | Each set can record `cleanReps` (reps done with good form; leave out when all were clean). Estimated 1RM, arrows and PRs use clean reps only, so `100 x 8` with form breaking after rep 6 is credited as `100 x 6`. Volume and fatigue still count every rep |
+| Form score | Clean reps / total reps per exercise per session. Under 80% for two sessions in a row raises a warning, and suggests the last lighter weight that was lifted clean |
 | Weekly sets per muscle | 1 per set as the primary muscle, 0.5 as a secondary muscle |
 | ATL / CTL | 7 day and 28 day exponentially weighted averages of daily volume, seeded with the mean of the first 14 days |
 | TSB | `CTL - ATL`. Decisions use TSB as a percentage of CTL, since raw volume differs a lot between lifters |

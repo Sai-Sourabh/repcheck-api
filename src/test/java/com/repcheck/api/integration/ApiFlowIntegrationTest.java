@@ -199,6 +199,42 @@ class ApiFlowIntegrationTest {
         assertThat(send(get("/api/body-weight"), null, 200).size()).isEqualTo(1);
         assertThat(send(get("/api/users/me"), null, 200).get("bodyWeightKg").asDouble()).isEqualTo(78.1);
 
+        // --- form check: only clean reps count as progress
+        String press = idByName(exercises, "Overhead Press");
+        JsonNode clean = send(post("/api/workouts"), workout(today.minusDays(9), "OHP clean",
+                set(press, 40, 8)), 201);
+        assertThat(block(clean, press).get("formPct").asDouble()).isEqualTo(100.0);
+        assertThat(block(clean, press).get("sets").get(0).get("cleanReps").isNull()).isTrue();
+
+        // 45 x 8 with form breaking after rep 5 is credited as 45 x 5 = 52.5 est. 1RM.
+        JsonNode sloppy = send(post("/api/workouts"), workout(today.minusDays(6), "OHP heavier",
+                formSet(press, 45, 8, 5)), 201);
+        JsonNode sloppyBlock = block(sloppy, press);
+        assertThat(sloppyBlock.get("bestOneRm").asDouble()).isEqualTo(52.5);
+        assertThat(sloppyBlock.get("formPct").asDouble()).isEqualTo(62.5);
+        assertThat(sloppyBlock.get("sets").get(0).get("cleanReps").asInt()).isEqualTo(5);
+        assertThat(sloppyBlock.get("sets").get(0).get("reps").asInt()).isEqualTo(8);
+        // Volume still counts all 8 reps.
+        assertThat(sloppy.get("totalVolumeKg").asDouble()).isEqualTo(45 * 8);
+
+        send(post("/api/workouts"), workout(today.minusDays(2), "OHP again", formSet(press, 45, 8, 6)), 201);
+        JsonNode pressCard = null;
+        for (JsonNode card : send(get("/api/analytics/lifts"), null, 200)) {
+            if (press.equals(card.get("exerciseId").asText())) {
+                pressCard = card;
+            }
+        }
+        assertThat(pressCard).isNotNull();
+        assertThat(pressCard.get("formPct").asDouble()).isEqualTo(75.0);
+        assertThat(pressCard.get("bestReps").asInt()).isEqualTo(6);
+        assertThat(pressCard.get("formWarning").asText()).contains("Drop back to 40 kg");
+        assertThat(pressCard.get("suggestedWeightKg").asDouble()).isEqualTo(40.0);
+        JsonNode pressHistory = send(get("/api/analytics/exercises/" + press + "/history"), null, 200);
+        assertThat(pressHistory.get(1).get("formPct").asDouble()).isEqualTo(62.5);
+        JsonNode lastTime = send(get("/api/workouts/previous?exerciseIds=" + press), null, 200);
+        assertThat(lastTime.get(0).get("sets").get(0).get("cleanReps").asInt()).isEqualTo(6);
+        send(post("/api/workouts"), workout(today, "Impossible", formSet(press, 45, 8, 9)), 400);
+
         mvc.perform(auth(delete("/api/cardio/" + run.get("id").asText()))).andExpect(status().isNoContent());
         mvc.perform(auth(delete("/api/exercises/" + custom.get("id").asText()))).andExpect(status().isNoContent());
         send(delete("/api/exercises/" + bench), null, 404);
@@ -223,6 +259,10 @@ class ApiFlowIntegrationTest {
 
     private static Map<String, Object> set(String exerciseId, double weightKg, int reps) {
         return Map.of("exerciseId", exerciseId, "weightKg", weightKg, "reps", reps);
+    }
+
+    private static Map<String, Object> formSet(String exerciseId, double weightKg, int reps, int cleanReps) {
+        return Map.of("exerciseId", exerciseId, "weightKg", weightKg, "reps", reps, "cleanReps", cleanReps);
     }
 
     @SafeVarargs

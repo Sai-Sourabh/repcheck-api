@@ -20,6 +20,8 @@ public final class WorkoutDtos {
             @NotNull UUID exerciseId,
             @PositiveOrZero @Max(1000) double weightKg,
             @Min(1) @Max(500) int reps,
+            /** Reps done with good form. Leave out when every rep was clean. */
+            @Min(0) @Max(500) Integer cleanReps,
             @PositiveOrZero Integer restSeconds) {
     }
 
@@ -32,12 +34,14 @@ public final class WorkoutDtos {
             @NotEmpty @Valid List<SetRequest> sets) {
     }
 
-    public record SetResponse(int setNumber, double weightKg, int reps, double estimatedOneRm,
-                              Integer restSeconds) {
+    /** cleanReps is null when every rep was clean. estimatedOneRm is based on clean reps only. */
+    public record SetResponse(int setNumber, double weightKg, int reps, Integer cleanReps,
+                              double estimatedOneRm, Integer restSeconds) {
     }
 
     public record ExerciseBlock(UUID exerciseId, String exerciseName, String muscleGroup, double bestOneRm,
-                                Double deltaPct, String deltaDirection, boolean pr, List<SetResponse> sets) {
+                                Double deltaPct, String deltaDirection, boolean pr, Double formPct,
+                                List<SetResponse> sets) {
     }
 
     public record WorkoutDetail(UUID id, String name, LocalDate sessionDate, Integer durationMinutes,

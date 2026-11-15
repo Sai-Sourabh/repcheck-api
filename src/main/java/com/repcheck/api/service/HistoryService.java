@@ -1,5 +1,6 @@
 package com.repcheck.api.service;
 
+import com.repcheck.api.domain.FormCheck;
 import com.repcheck.api.domain.OneRMCalculator;
 import com.repcheck.api.domain.OneRMCalculator.Delta;
 import com.repcheck.api.entity.ExerciseHistory;
@@ -48,14 +49,21 @@ public class HistoryService {
             List<SetWithSession> sessionSets = entry.getValue();
             SetWithSession best = sessionSets.get(0);
             double volume = 0;
+            double topWeight = 0;
+            int totalReps = 0;
+            int cleanReps = 0;
             for (SetWithSession set : sessionSets) {
+                // Volume counts every rep; progress below counts clean reps only.
                 volume += set.weightKg() * set.reps();
+                topWeight = Math.max(topWeight, set.weightKg());
+                totalReps += set.reps();
+                cleanReps += clean(set);
                 if (isBetter(set, best)) {
                     best = set;
                 }
             }
             // Bodyweight lifts have no load, so progress is tracked on reps instead.
-            double metric = best.estimatedOneRm() > 0 ? best.estimatedOneRm() : best.reps();
+            double metric = best.estimatedOneRm() > 0 ? best.estimatedOneRm() : clean(best);
             Delta delta = OneRMCalculator.delta(previousMetric, metric);
 
             ExerciseHistory row = new ExerciseHistory();
@@ -65,9 +73,12 @@ public class HistoryService {
             row.setSessionDate(best.sessionDate());
             row.setBestOneRm(best.estimatedOneRm());
             row.setBestWeightKg(best.weightKg());
-            row.setBestReps(best.reps());
+            row.setBestReps(clean(best));
             row.setTotalVolumeKg(OneRMCalculator.round2(volume));
             row.setTotalSets(sessionSets.size());
+            row.setTotalReps(totalReps);
+            row.setCleanReps(cleanReps);
+            row.setTopWeightKg(topWeight);
             row.setDeltaPct(delta.pct());
             row.setDeltaDirection(delta.direction().name());
             row.setPr(previousMetric != null && metric > bestEver);
@@ -84,6 +95,10 @@ public class HistoryService {
         if (byOneRm != 0) {
             return byOneRm > 0;
         }
-        return candidate.reps() > best.reps();
+        return clean(candidate) > clean(best);
+    }
+
+    private static int clean(SetWithSession set) {
+        return FormCheck.effectiveReps(set.reps(), set.cleanReps());
     }
 }

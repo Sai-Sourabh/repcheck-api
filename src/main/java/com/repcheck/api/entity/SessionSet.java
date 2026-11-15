@@ -42,6 +42,10 @@ public class SessionSet {
     @Column(nullable = false)
     private int reps;
 
+    /** Reps done with good form. Null means all of them. */
+    @Column(name = "clean_reps")
+    private Integer cleanReps;
+
     @Column(name = "estimated_1rm", nullable = false)
     private double estimatedOneRm;
 

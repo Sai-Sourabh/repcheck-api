@@ -1,6 +1,7 @@
 package com.repcheck.api.service;
 
 import com.repcheck.api.domain.FatigueCalculator;
+import com.repcheck.api.domain.FormCheck;
 import com.repcheck.api.domain.FatigueCalculator.Point;
 import com.repcheck.api.domain.FatigueCalculator.Status;
 import com.repcheck.api.domain.OneRMCalculator;
@@ -260,9 +261,15 @@ public class AnalyticsService {
             List<Double> trend = chain.subList(Math.max(0, chain.size() - TREND_POINTS), chain.size()).stream()
                     .map(ExerciseHistory::getBestOneRm)
                     .toList();
+            FormCheck.Warning warning = FormCheck.egoLift(chain.stream()
+                    .map(h -> new FormCheck.Session(h.getTopWeightKg(), h.getTotalReps(), h.getCleanReps()))
+                    .toList());
             cards.add(new LiftCard(exercise.getId(), exercise.getName(), exercise.getMuscleGroup(),
                     latest.getSessionDate(), latest.getBestOneRm(), latest.getBestWeightKg(),
                     latest.getBestReps(), latest.getDeltaPct(), latest.getDeltaDirection(), latest.isPr(),
+                    FormCheck.formPct(latest.getTotalReps(), latest.getCleanReps()),
+                    warning == null ? null : warning.message(),
+                    warning == null ? null : warning.suggestedWeightKg(),
                     trend));
         }
         cards.sort(Comparator.comparing(LiftCard::sessionDate).reversed()
@@ -274,7 +281,8 @@ public class AnalyticsService {
     public List<HistoryPoint> exerciseHistory(UUID userId, UUID exerciseId) {
         return histories.findByUserIdAndExerciseIdOrderBySessionDateAsc(userId, exerciseId).stream()
                 .map(h -> new HistoryPoint(h.getSessionDate(), h.getBestOneRm(), h.getBestWeightKg(),
-                        h.getBestReps(), h.getTotalVolumeKg(), h.getDeltaPct(), h.getDeltaDirection(), h.isPr()))
+                        h.getBestReps(), h.getTotalVolumeKg(), h.getDeltaPct(), h.getDeltaDirection(), h.isPr(),
+                        FormCheck.formPct(h.getTotalReps(), h.getCleanReps())))
                 .toList();
     }
 

@@ -22,10 +22,10 @@ public interface SessionSetRepository extends JpaRepository<SessionSet, UUID> {
 
     /** Every set the user has logged for one exercise, oldest session first. */
     @Query("select new com.repcheck.api.repository.SetWithSession("
-            + "s.sessionId, w.sessionDate, w.createdAt, s.weightKg, s.reps, s.estimatedOneRm) "
+            + "s.sessionId, w.sessionDate, w.createdAt, s.weightKg, s.reps, s.cleanReps, s.estimatedOneRm) "
             + "from SessionSet s join WorkoutSession w on w.id = s.sessionId "
             + "where w.userId = :userId and s.exerciseId = :exerciseId "
-            + "order by w.sessionDate asc, w.createdAt asc, s.setNumber asc")
+            + "order by w.sessionDate asc, w.createdAt asc, s.sequence asc")
     List<SetWithSession> findForExercise(@Param("userId") UUID userId, @Param("exerciseId") UUID exerciseId);
 
     @Query("select new com.repcheck.api.repository.SetWithExercise("

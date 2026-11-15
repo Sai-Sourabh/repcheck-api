@@ -12,11 +12,13 @@ public final class AnalyticsDtos {
     /** Latest state of one lift: the "stock ticker" card. */
     public record LiftCard(UUID exerciseId, String exerciseName, String muscleGroup, LocalDate sessionDate,
                            double bestOneRm, double bestWeightKg, int bestReps, Double deltaPct,
-                           String deltaDirection, boolean pr, List<Double> trend) {
+                           String deltaDirection, boolean pr, Double formPct, String formWarning,
+                           Double suggestedWeightKg, List<Double> trend) {
     }
 
     public record HistoryPoint(LocalDate sessionDate, double bestOneRm, double bestWeightKg, int bestReps,
-                               double totalVolumeKg, Double deltaPct, String deltaDirection, boolean pr) {
+                               double totalVolumeKg, Double deltaPct, String deltaDirection, boolean pr,
+                               Double formPct) {
     }
 
     public record MuscleVolume(String muscleGroup, double totalSets, double totalVolumeKg,

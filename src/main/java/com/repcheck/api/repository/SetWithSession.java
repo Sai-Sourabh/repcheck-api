@@ -6,5 +6,6 @@ import java.util.UUID;
 
 /** A logged set together with the date of the session it belongs to. */
 public record SetWithSession(UUID sessionId, LocalDate sessionDate, Instant createdAt,
-                             Double weightKg, Integer reps, Double estimatedOneRm) {
+                             Double weightKg, Integer reps, Integer cleanReps,
+                             Double estimatedOneRm) {
 }
